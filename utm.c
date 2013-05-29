@@ -10,7 +10,7 @@ int read_tape(char*);
 
 int main(int argc, char *argv[])
 {
-  if(argc < 2) // No args: input from stdin
+  if(argc < 2) /* No args: input from stdin */
   {
 		printf("Please input the TM's codification. To end press end-of-input.\n");
     if(parse_file(stdin) < 0)
@@ -19,7 +19,7 @@ int main(int argc, char *argv[])
       return -1;
     }
   }
-  else if(argc == 2) // One arg: input from file
+  else if(argc == 2) /* One arg: input from file */
   {
 		printf("Loading TM...\n");
 
@@ -31,7 +31,7 @@ int main(int argc, char *argv[])
 
 		printf("TM loaded\n");
   }
-  else // Incorrect arg number
+  else /* Incorrect arg number */
   {
     printf("Universal Turing Machine \nUsage: %s [file]\nArguments: \n\tfile: text file containing the machine encoding.\n", argv[0]);
   }
@@ -44,7 +44,7 @@ int main(int argc, char *argv[])
 		return -1;
 	}
 
-	// TODO - actual TM program
+	/* TODO - actual TM program */
 
 	free(tape);
 	return 0; 

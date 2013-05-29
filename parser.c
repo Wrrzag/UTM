@@ -8,7 +8,7 @@ typedef enum {
   RIGHT
 } movement_t;
 
-// TODO - TM data structure
+/* TODO - TM data structure */
 
 int skip_line(FILE *);
 int count_zeros(FILE *);
@@ -20,10 +20,10 @@ int parse_file(FILE *f)
   int i, from, to, to_write, trigger, mv_c;
   movement_t movement;
   
-  // Skip comments
+  /* Skip comments */
   while((c = fgetc(f)) != EOF && c == 'c' && skip_line(f) != EOF);
 
-  // Read 4 first 1s  
+  /* Read 4 first 1s */ 
   for(i=0; i<4 && c != EOF; i++, c = fgetc(f))
   {printf("%c ", c);
     if(c != '1')
@@ -32,7 +32,7 @@ int parse_file(FILE *f)
     }
   }
 
-  // Read actual TM  
+  /* Read actual TM */  
   while(c != EOF)
   {
     ungetc(c, f);
@@ -51,13 +51,13 @@ int parse_file(FILE *f)
     c = fgetc(f); if(c == EOF || c == '1') break; else return -1;
   }printf("%c ", c);
 
-  // Read the last 1 [3 of them already read]
+  /* Read the last 1 [3 of them already read] */
   if(c != '1')
   {
     return -1;
   }
 
-  // Check if there is still more to read and if there is return error
+  /* Check if there is still more to read and if there is return error */
   if(((c = fgetc(f)) != '\n' || c != EOF) && (c = fgetc(f)) != EOF) return -1;
 
   return 0;
