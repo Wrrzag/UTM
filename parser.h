@@ -1,1 +1,3 @@
-int parse_file(char*);
+#include <stdio.h>
+
+int parse_file(FILE*);

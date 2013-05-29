@@ -8,20 +8,17 @@ typedef enum {
   RIGHT
 } movement_t;
 
+// TODO - TM data structure
+
 int skip_line(FILE *);
 int count_zeros(FILE *);
+int is_valid(char);
 
-int parse_file(char *filename)
+int parse_file(FILE *f)
 {
-  FILE *f;
   char c;
   int i, from, to, to_write, trigger, mv_c;
   movement_t movement;
-
-  if((f = fopen(filename, "r")) == NULL)
-  {
-    return -1;
-  }
   
   // Skip comments
   while((c = fgetc(f)) != EOF && c == 'c' && skip_line(f) != EOF);
@@ -51,7 +48,7 @@ int parse_file(char *filename)
 
     c = fgetc(f); if(c == EOF || c != '1') return -1; printf("%c ", c);
     c = fgetc(f); if(c == EOF || c != '1') return -1; printf("%c ", c);
-    c = fgetc(f); if(c == EOF || c == '1') break;
+    c = fgetc(f); if(c == EOF || c == '1') break; else return -1;
   }printf("%c ", c);
 
   // Read the last 1 [3 of them already read]
@@ -60,10 +57,9 @@ int parse_file(char *filename)
     return -1;
   }
 
-  // Check if there is still more to read
+  // Check if there is still more to read and if there is return error
   if(((c = fgetc(f)) != '\n' || c != EOF) && (c = fgetc(f)) != EOF) return -1;
 
-  fclose(f);
   return 0;
 }
 
@@ -87,8 +83,13 @@ int count_zeros(FILE *f)
     counter++;
     c = fgetc(f);
 
-    if(c == EOF) return -1;
+    if(c == EOF || !is_valid(c)) return -1;
   }
 
-  return counter;
+  return counter > 0 ? counter : -1;
+}
+
+int is_valid(char c)
+{
+	return c == '0' || c == '1' ? 1 : 0;
 }
