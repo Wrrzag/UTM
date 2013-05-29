@@ -1,4 +1,4 @@
 UTM
 ===
 
-An universal Turing Machine
+A universal Turing Machine
