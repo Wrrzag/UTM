@@ -1,4 +1,5 @@
 #include "turing_machine.h"
+#include "parser.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,7 +12,7 @@ int states_added = 0;
 int max_states = INITIAL_STATES;
 
 /* Function implementation */
-int init_from_file(char* file_name, state **tm)
+int init_from_file(const char* file_name, state **tm)
 { 
  if((*tm = malloc(sizeof(state)*INITIAL_STATES)) == NULL)
   {
@@ -21,6 +22,8 @@ int init_from_file(char* file_name, state **tm)
 	{
 		return -1;
 	}
+
+	return 0;
 }
 
 int init_from_stdin(state **tm)
@@ -31,9 +34,10 @@ int init_from_stdin(state **tm)
   }
   if(parse_file(stdin, tm) < 0)
   {
-    printf("Input error\n");
     return -1;
   }
+
+	return 0;
 }
 
 int destroy(state **tm) /* TODO */
@@ -41,10 +45,10 @@ int destroy(state **tm) /* TODO */
   return 0;
 }
 
-int add_to_tm(state **tm_ptr, int from, int trigger, int to, int to_write, int mv_c)
+int add_to_tm(state **tm_ptr, const int from, const int trigger, const int to, const int to_write, const int mv_c)
 {
   state *tm = *tm_ptr;
-  int *last = &tm[from].last_added; /* It's tedious to use the complete name all the time (define?)*/
+  int *last = &tm[from].last_added; /* It's tedious to use the complete name all the time */
 
   if(states_added > max_states)
   {
@@ -65,7 +69,7 @@ int add_to_tm(state **tm_ptr, int from, int trigger, int to, int to_write, int m
   }
   else
   {
-    if((tm[from].transitions = realloc(tm[from].transitions, 1+sizeof(transition)*tm[from].last_added)) == NULL)
+    if((tm[from].transitions = realloc(tm[from].transitions, 1+sizeof(transition)*(*last))) == NULL)
     {
       return -1;
     }
@@ -75,6 +79,18 @@ int add_to_tm(state **tm_ptr, int from, int trigger, int to, int to_write, int m
   tm[from].transitions[*last].movement = mv_c;
   tm[from].transitions[*last].to_write = to_write+'0';
   (*last)++;
+
+	return 0;
+}
+
+int run_step(const state *tm, char *tape_in, char *tape_out, int *q)
+{
+}
+
+int run_all(const state *tm, char *tape_in, char *tape_out, int *q)
+{
+	while(run_step(tm, tape_in, tape_out, q) != -1);
+	return *q;
 }
 
 /* PRIVATE */

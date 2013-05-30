@@ -1,20 +1,18 @@
 #include "parser.h"
-#include "turing_machine.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 
-/* TODO - TM data structure */
-
+/* Private declarations */
 int skip_line(FILE *);
 int count_zeros(FILE *, char*);
 int is_valid(char);
 
+/* Public functions implementation */
 int parse_file(FILE *f, state **tm)
 {
   char c;
   int i, from, to, to_write, trigger, mv_c;
-  movement_t movement;
   
   /* Skip comments */
   while((c = fgetc(f)) != EOF && c == 'c' && skip_line(f) != EOF);
@@ -62,6 +60,7 @@ int parse_file(FILE *f, state **tm)
   return 0;
 }
 
+/* PRIVATE */
 int skip_line(FILE *f)
 {
   char c;

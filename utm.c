@@ -6,15 +6,23 @@
 #define MAX_SIZE 50
 
 int read_tape(char*);
+void print_tapes(char*, char*, int);
 
 int main(int argc, char *argv[])
 {
-  state *tm; /* The pointer will contain [q0 | q1 | q2 | ... | qn] */
+  state *tm; /* The pointer will contain [q0 | q1 | q2 | ... | qn], each qn will contain [rule1 | rule2 | ... | rulen ] */
+	char opt;
+	char *tape_in, *tape_out;
+	int q = 0;
 
   if(argc < 2) /* No args: input from stdin */
   {
 		printf("Please input the TM's codification. To end press end-of-input.\n");
-    init_from_stdin(&tm);
+    if(init_from_stdin(&tm) < 0)
+	  {
+		  printf("Error parsing the file\n");
+		  return -1;
+	  }
   }
   else if(argc == 2) /* One arg: input from file */
   {
@@ -34,20 +42,37 @@ int main(int argc, char *argv[])
   }
 
 	printf("Enter the input tape without spaces.\n");
-	char* tape;
-	if((tape = malloc(MAX_SIZE)) == NULL || read_tape(tape) < 0)
+
+	if((tape_in = malloc(MAX_SIZE)) == NULL || read_tape(tape_in) < 0 || (tape_out = malloc(MAX_SIZE)) == NULL )
 	{
 		printf("Error allocating memory\n");
 		return -1;
 	}
 
+	printf("Press 'a' to run the TM until the end. Press another key to run a step. ");
 	/* TODO - actual TM program */
+	while((opt = getchar()) != 'a' && run_step(tm, tape_in, tape_out, &q) != -1)
+	{
+		printf("Running step:\n");
+		print_tapes(tape_in, tape_out, q);
+	}
+	if(opt == 'a')
+	{
+		printf("Running until the end (warning: the TM could never finish):\n");
+		run_all(tm, tape_in, tape_out, &q);
+		print_tapes(tape_in, tape_out, q);
+	}
 
+	
+	/* Memory freeing */
+	free(tape_in);
+	free(tape_out);
+	destroy(&tm);
 
-	free(tape);
 	return 0; 
 }
 
+/* PRIVATE */
 int read_tape(char *tape)
 {
 	char c;
@@ -69,4 +94,8 @@ int read_tape(char *tape)
 
 	tape[count] = '\0';
 	return 0;
+}
+
+void print_tapes(char *tape_in, char *tape_out, int q)
+{
 }
