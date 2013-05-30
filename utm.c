@@ -1,33 +1,30 @@
-#include "parser.h"
+#include "turing_machine.h"
 
 #include<stdio.h>
 #include<stdlib.h>
 
 #define MAX_SIZE 50
 
-int parse_tm_file(const char*);
 int read_tape(char*);
 
 int main(int argc, char *argv[])
 {
+  state *tm; /* The pointer will contain [q0 | q1 | q2 | ... | qn] */
+
   if(argc < 2) /* No args: input from stdin */
   {
 		printf("Please input the TM's codification. To end press end-of-input.\n");
-    if(parse_file(stdin) < 0)
-    {
-      printf("Input error\n");
-      return -1;
-    }
+    init_from_stdin(&tm);
   }
   else if(argc == 2) /* One arg: input from file */
   {
 		printf("Loading TM...\n");
 
-		if(parse_tm_file(argv[1]) < 0) 
-		{
-			printf("Error parsing the file\n");
-			return -1;
-		}
+  	if(init_from_file(argv[1], &tm) < 0) 
+	  {
+		  printf("Error parsing the file\n");
+		  return -1;
+	  }
 
 		printf("TM loaded\n");
   }
@@ -46,25 +43,9 @@ int main(int argc, char *argv[])
 
 	/* TODO - actual TM program */
 
+
 	free(tape);
 	return 0; 
-}
-
-int parse_tm_file(const char *filename)
-{
-		FILE *f;
-		if((f = fopen(filename, "r")) == NULL)
-		{
-		  return -1;
-		}
-    if(parse_file(f) < 0)
-    {
-  		fclose(f);
-      return -1;
-    }
-		fclose(f);
-
-		return 0;
 }
 
 int read_tape(char *tape)

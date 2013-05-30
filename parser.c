@@ -1,20 +1,16 @@
 #include "parser.h"
+#include "turing_machine.h"
 
 #include <stdio.h>
-
-typedef enum {
-  LEFT,
-  NONE,
-  RIGHT
-} movement_t;
+#include <stdlib.h>
 
 /* TODO - TM data structure */
 
 int skip_line(FILE *);
-int count_zeros(FILE *);
+int count_zeros(FILE *, char*);
 int is_valid(char);
 
-int parse_file(FILE *f)
+int parse_file(FILE *f, state **tm)
 {
   char c;
   int i, from, to, to_write, trigger, mv_c;
@@ -25,7 +21,7 @@ int parse_file(FILE *f)
 
   /* Read 4 first 1s */ 
   for(i=0; i<4 && c != EOF; i++, c = fgetc(f))
-  {printf("%c ", c);
+  {
     if(c != '1')
     {
       return -1;
@@ -37,22 +33,25 @@ int parse_file(FILE *f)
   {
     ungetc(c, f);
     if(
-      (from = count_zeros(f)) < 0 ||
-      (trigger = count_zeros(f)) < 0 ||
-      (to = count_zeros(f)) < 0 ||
-      (to_write = count_zeros(f)) < 0 ||
-      (mv_c = count_zeros(f)) < 0
+      (from = count_zeros(f, &c)) < 0 ||
+      (trigger = count_zeros(f, &c)) < 0 ||
+      (to = count_zeros(f, &c)) < 0 ||
+      (to_write = count_zeros(f, &c)) < 0 ||
+      (mv_c = count_zeros(f, &c)) < 0
     ) return -1;
 
-    printf(":%d :%d :%d :%d :%d ", from, trigger, to, to_write, mv_c); 
+    if((add_to_tm(tm, --from, --trigger, --to, --to_write, --mv_c)) < 0)
+    {
+      return -1;
+    }
 
-    c = fgetc(f); if(c == EOF || c != '1') return -1; printf("%c ", c);
-    c = fgetc(f); if(c == EOF || c != '1') return -1; printf("%c ", c);
-    c = fgetc(f); if(c == EOF || c == '1') break; else return -1;
-  }printf("%c ", c);
+    if(c == EOF || c != '1') return -1; 
+    c = fgetc(f); if(c == EOF || c != '1') return -1;
+    c = fgetc(f); if(c == EOF || c == '1') break; else if(c != '0') return -1;
+  }
 
-  /* Read the last 1 [3 of them already read] */
-  if(c != '1')
+  /* Read the last 1 (3 of them already read) */
+  if((c = fgetc(f)) != '1')
   {
     return -1;
   }
@@ -71,19 +70,19 @@ int skip_line(FILE *f)
   return c == EOF ? EOF : 1;
 }
 
-int count_zeros(FILE *f)
+int count_zeros(FILE *f, char *c)
 {
   int counter = 0;
-  char c;
+  //char c;
 
-  c = fgetc(f); 
-  if(c == EOF) return -1; 
-  while(c != '1')
+  *c = fgetc(f); 
+  if(*c == EOF) return -1; 
+  while(*c != '1')
   {
     counter++;
-    c = fgetc(f);
+    *c = fgetc(f);
 
-    if(c == EOF || !is_valid(c)) return -1;
+    if(*c == EOF || !is_valid(*c)) return -1;
   }
 
   return counter > 0 ? counter : -1;
