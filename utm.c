@@ -6,14 +6,14 @@
 #define MAX_SIZE 50
 
 int read_tape(char*);
-void print_tapes(char*, char*, int);
+void print_tape(char*, int);
 
 int main(int argc, char *argv[])
 {
   state *tm; /* The pointer will contain [q0 | q1 | q2 | ... | qn], each qn will contain [rule1 | rule2 | ... | rulen ] */
 	char opt;
-	char *tape_in, *tape_out;
-	int q = 0;
+	char *tape_in;
+	int q = 0, pos_in = 0;
 
   if(argc < 2) /* No args: input from stdin */
   {
@@ -34,7 +34,7 @@ int main(int argc, char *argv[])
 		  return -1;
 	  }
 
-		printf("TM loaded\n");
+		printf("TM '%s' loaded\n", argv[1]);
   }
   else /* Incorrect arg number */
   {
@@ -43,30 +43,29 @@ int main(int argc, char *argv[])
 
 	printf("Enter the input tape without spaces.\n");
 
-	if((tape_in = malloc(MAX_SIZE)) == NULL || read_tape(tape_in) < 0 || (tape_out = malloc(MAX_SIZE)) == NULL )
+	if((tape_in = malloc(MAX_SIZE)) == NULL || read_tape(tape_in) < 0 )
 	{
 		printf("Error allocating memory\n");
 		return -1;
 	}
 
 	printf("Press 'a' to run the TM until the end. Press another key to run a step. ");
-	/* TODO - actual TM program */
-	while((opt = getchar()) != 'a' && run_step(tm, tape_in, tape_out, &q) != -1)
+  print_tape(tape_in, 0);
+	while((opt = getchar()) != 'a' && run_step(tm, &tape_in, &pos_in, &q) > 0)
 	{
-		printf("Running step:\n");
-		print_tapes(tape_in, tape_out, q);
+		printf("Running step:");
+		print_tape(tape_in, pos_in);
 	}
 	if(opt == 'a')
 	{
-		printf("Running until the end (warning: the TM could never finish):\n");
-		run_all(tm, tape_in, tape_out, &q);
-		print_tapes(tape_in, tape_out, q);
+		printf("Running until the end (warning: the TM could never finish)...\n");
+		run_all(tm, &tape_in, &pos_in, &q);
+		print_tape(tape_in, pos_in);
 	}
 
 	
 	/* Memory freeing */
 	free(tape_in);
-	free(tape_out);
 	destroy(&tm);
 
 	return 0; 
@@ -96,6 +95,20 @@ int read_tape(char *tape)
 	return 0;
 }
 
-void print_tapes(char *tape_in, char *tape_out, int q)
+void print_tape(char *tape_in, int pos)
 {
+  printf("\n[");
+  int c;
+  for( c = 0; tape_in[c] != '\0'; c++)
+  {
+    if(c==pos)
+    {
+      printf(" [%c] ", tape_in[c]);
+    }
+    else
+    {
+      printf("  %c  ", tape_in[c]);
+    }
+  }
+  printf("]");
 }

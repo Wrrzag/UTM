@@ -69,27 +69,44 @@ int add_to_tm(state **tm_ptr, const int from, const int trigger, const int to, c
   }
   else
   {
-    if((tm[from].transitions = realloc(tm[from].transitions, 1+sizeof(transition)*(*last))) == NULL)
+    if((tm[from].transitions = realloc(tm[from].transitions, sizeof(transition)*((*last)+1))) == NULL)
     {
       return -1;
     }
   }
 
   tm[from].transitions[*last].to = to;
-  tm[from].transitions[*last].movement = mv_c;
+  tm[from].transitions[*last].in_tape = trigger;
+  tm[from].transitions[*last].movement = mv_c-1;
   tm[from].transitions[*last].to_write = to_write+'0';
   (*last)++;
 
 	return 0;
 }
 
-int run_step(const state *tm, char *tape_in, char *tape_out, int *q)
+/* TODO */
+int run_step(const state *tm, char **tape_in, int *pos_in, int *q)
 {
+  int found = 0; /* Marks if the state is not found to stop the TM */
+  int i;
+
+  for(i = 0; i < tm[*q].last_added+1 && !found; i++)
+  {  
+    if((*tape_in)[*pos_in]-'0' == tm[*q].transitions[i].in_tape)
+    {
+      (*tape_in)[*pos_in] = tm[*q].transitions[i].to_write; /* Write to tape */
+      if((*pos_in += tm[*q].transitions[i].movement) < 0) (*pos_in)++; /* Move tape position */
+      *q = tm[*q].transitions[i].to; /* Change state */ 
+      found = 1;
+    }
+  }
+
+  return found ? 1 : 0;
 }
 
-int run_all(const state *tm, char *tape_in, char *tape_out, int *q)
+int run_all(const state *tm, char **tape_in, int *pos_in, int *q)
 {
-	while(run_step(tm, tape_in, tape_out, q) != -1);
+	while(run_step(tm, tape_in, pos_in, q) > 0);
 	return *q;
 }
 
