@@ -12,10 +12,33 @@ int is_valid(char);
 int parse_file(FILE *f, state **tm)
 {
   char c;
-  int i, from, to, to_write, trigger, mv_c;
+  int i, from, to, to_write, trigger, mv_c, sym_count, syms;
   
   /* Skip comments */
   while((c = fgetc(f)) != EOF && c == 'c' && skip_line(f) != EOF);
+
+	if(c == '{') /* User defined symbols */
+	{
+		sym_count = syms = 0;
+		while((c = fgetc(f)) != EOF && c != '}')
+		{
+			if(sym_count++%2 && c != ',')	
+			{
+				return -1;
+			}
+			else
+			{
+				/*add_symbol(symbols, syms++, c);*/
+			}
+		}
+		fgetc(f); /*trim whitespace */
+		c = fgetc(f);
+	}
+	else
+	{
+		/* Standard {0, 1, b} */
+		/* symbols = ['0', '1', 'b'] */
+	}
 
   /* Read 4 first 1s */ 
   for(i=0; i<4 && c != EOF; i++, c = fgetc(f))
@@ -38,7 +61,7 @@ int parse_file(FILE *f, state **tm)
       (mv_c = count_zeros(f, &c)) < 0
     ) return -1;
 
-    if((add_to_tm(tm, --from, --trigger, --to, --to_write, --mv_c)) < 0)
+    if((add_to_tm(tm, --from, (--trigger)+'0', --to, (--to_write)+'0', --mv_c)) < 0)
     {
       return -1;
     }

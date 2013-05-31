@@ -1,5 +1,8 @@
 #ifndef _TURING_MACHINE_
 #define _TURING_MACHINE_
+#define MAX_SIZE 50
+#define INITIAL_STATES 5
+
 typedef enum {
   LEFT = -1,
   NONE,
@@ -8,20 +11,30 @@ typedef enum {
 
 typedef struct _transition {
   int to;
-  int in_tape;
+  char in_tape;
+	char to_write;
   movement_t movement;
-  char to_write;
 } transition;
 
 typedef struct _state {
   int last_added;
   transition *transitions;
 } state;
+
+typedef struct _tape {
+	char *elements;
+	int size;
+} tape;
 #endif
 
 int init_from_file(const char*, state**);
 int init_from_stdin(state**);
-int destroy(state**);
-int add_to_tm(state**, const int, const int, const int, const int, const int);
-int run_step(const state*, char**, int*, int*);
-int run_all(const state*, char**, int*, int*);
+int destroy_tm(state**);
+int init_tape(tape**);
+int destroy_tape(tape*);
+
+int add_to_tm(state**, const int, const char, const int, const char, const int);
+int run_step(const state*, tape*, int*, int*);
+int run_all(const state*, tape*, int*, int*);
+int read_tape(tape*);
+void print_tape(tape, int);
