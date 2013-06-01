@@ -25,6 +25,14 @@ typedef struct _tape {
 	char *elements;
 	int size;
 } tape;
+
+typedef struct _turing_machine {
+	state *states;
+	tape tape;
+	int state_num;
+	int max_states;
+} turing_machine;
+
 #endif
 
 int init_from_file(const char*, state**);
