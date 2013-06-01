@@ -5,9 +5,9 @@
 
 int main(int argc, char *argv[])
 {
-  state *tm; /* The pointer will contain [q0 | q1 | q2 | ... | qn], each qn will contain [rule1 | rule2 | ... | rulen ] */
+  turing_machine *tm; /* The pointer will contain [q0 | q1 | q2 | ... | qn], each qn will contain [rule1 | rule2 | ... | rulen ] */
 	char opt;
-	tape *tape_in;
+	//tape *tape_in;
 	int q = 0, pos_in = 0, res;
 
   if(argc < 2) /* No args: input from stdin */
@@ -38,19 +38,19 @@ int main(int argc, char *argv[])
 
 	printf("Enter the input tape without spaces.\n");
 
-	if(init_tape(&tape_in) < 0 || read_tape(tape_in) < 0 )
+	if(init_tape(&(tm->tape)) < 0 || read_tape(tm->tape) < 0 )
 	{
 		printf("Error allocating memory\n");
 		return -1;
 	}
 
 	printf("Press 'a' to run the TM until the end. Press another key to run a step. ");
-  print_tape(*tape_in, 0);
+  print_tape(*(tm->tape), 0);
 	while((opt = getchar()) != 'a')
 	{
 			printf("Running step:");
-			res = run_step(tm, tape_in, &pos_in, &q);
-			print_tape(*tape_in, pos_in);
+			res = run_step(tm, &pos_in, &q);
+			print_tape(*(tm->tape), pos_in);
 
 			if(res <= 0)
 			{
@@ -60,13 +60,13 @@ int main(int argc, char *argv[])
 	if(opt == 'a')
 	{
 		printf("Running until the end (warning: the TM could never finish)...\n");
-		run_all(tm, tape_in, &pos_in, &q);
-		print_tape(*tape_in, pos_in);
+		run_all(tm, &pos_in, &q);
+		print_tape(*(tm->tape), pos_in);
 	}
 
 	
 	/* Memory freeing */
-	destroy_tape(tape_in);
+	//destroy_tape(tape_in);
 	destroy_tm(&tm);
 
 	return 0; 

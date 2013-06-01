@@ -28,21 +28,21 @@ typedef struct _tape {
 
 typedef struct _turing_machine {
 	state *states;
-	tape tape;
+	tape *tape;
 	int state_num;
 	int max_states;
 } turing_machine;
 
 #endif
 
-int init_from_file(const char*, state**);
-int init_from_stdin(state**);
-int destroy_tm(state**);
+int init_from_file(const char*, turing_machine**);
+int init_from_stdin(turing_machine**);
+int destroy_tm(turing_machine**);
 int init_tape(tape**);
 int destroy_tape(tape*);
 
-int add_to_tm(state**, const int, const char, const int, const char, const int);
-int run_step(const state*, tape*, int*, int*);
-int run_all(const state*, tape*, int*, int*);
+int add_to_tm(turing_machine**, const int, const char, const int, const char, const int);
+int run_step(const turing_machine*, int*, int*);
+int run_all(const turing_machine*, int*, int*);
 int read_tape(tape*);
 void print_tape(tape, int);

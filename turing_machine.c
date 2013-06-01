@@ -6,14 +6,20 @@
 #include <string.h>
 
 /* Private declarations */
-int parse_tm_file(const char*, state**);
-int states_added = 0;
-int max_states = INITIAL_STATES;
+int parse_tm_file(const char*, turing_machine**);
 
 /* Function implementation */
-int init_from_file(const char* file_name, state **tm)
-{ 
- if((*tm = malloc(sizeof(state)*INITIAL_STATES)) == NULL)
+int init_from_file(const char* file_name, turing_machine **tm)
+{
+	if(((*tm) = malloc(sizeof(turing_machine))) == NULL)
+  {
+    return -1;
+  }
+	if(((*tm)->states = malloc(sizeof(state)*INITIAL_STATES)) == NULL)
+  {
+    return -1;
+  }
+	if(init_tape(&((*tm)->tape)) < 0)
   {
     return -1;
   }
@@ -22,12 +28,22 @@ int init_from_file(const char* file_name, state **tm)
 		return -1;
 	}
 
+	(*tm)->state_num = 0;
+	(*tm)->max_states = INITIAL_STATES;
 	return 0;
 }
 
-int init_from_stdin(state **tm)
+int init_from_stdin(turing_machine **tm)
 {
- if((*tm = malloc(sizeof(state)*INITIAL_STATES)) == NULL)
+	if((*tm = malloc(sizeof(turing_machine))) == NULL)
+  {
+    return -1;
+  }
+	if(((*tm)->states = malloc(sizeof(state)*INITIAL_STATES)) == NULL)
+  {
+    return -1;
+  }
+	if(init_tape(&((*tm)->tape)) < 0)
   {
     return -1;
   }
@@ -49,7 +65,7 @@ int init_tape(tape **tape)
 	return 0;
 }
 
-int destroy_tm(state **tm) /* TODO */
+int destroy_tm(turing_machine **tm) /* TODO */
 {
   return 0;
 }
@@ -59,79 +75,80 @@ int destroy_tape(tape *tape) /* TODO */
 	return 0;
 }
 
-int add_to_tm(state **tm_ptr, const int from, const char trigger, const int to, const char to_write, const int mv_c)
+int add_to_tm(turing_machine **tm_ptr, const int from, const char trigger, const int to, const char to_write, const int mv_c)
 {
-  state *tm = *tm_ptr;
-  int *last = &tm[from].last_added; /* It's tedious to use the complete name all the time */
+  turing_machine *tm = *tm_ptr;
+  int *last = &(tm->states[from].last_added); /* It's tedious to use the complete name all the time */
 
-  if(states_added > max_states || to > max_states)
+  if(tm->state_num > tm->max_states || to > tm->max_states)
   {
-    max_states += INITIAL_STATES;
-    if((tm = realloc(tm, max_states)) == NULL)
+    tm->max_states += INITIAL_STATES;
+		state *tmp_state_ptr;
+    if((tmp_state_ptr = malloc(sizeof(state)*(tm->max_states))) == NULL || (tm->states = memcpy(tmp_state_ptr, tm->states, tm->max_states)) == NULL)
     {
       return -1;
     }
   }
 
-  if(tm[from].transitions == NULL)
+  if(tm->states[from].transitions == NULL)
   {
-    if((tm[from].transitions = malloc(sizeof(transition))) == NULL)
+    if((tm->states[from].transitions = malloc(sizeof(transition))) == NULL)
     {
       return -1;
     }
     *last = 0;
-		states_added++;
+		tm->state_num++;
   }
   else
   {
-    if((tm[from].transitions = realloc(tm[from].transitions, sizeof(transition)*((*last)+1))) == NULL)
+		transition *tmp_trans_ptr;
+    if((tmp_trans_ptr = malloc(sizeof(transition)*((*last)+1))) == NULL || (tm->states[from].transitions = memcpy(tmp_trans_ptr, tm->states[from].transitions, sizeof(transition)*((*last)+1))) == NULL)
     {
       return -1;
     }
   }
 
-  tm[from].transitions[*last].to = to;
-  tm[from].transitions[*last].in_tape = trigger;
-  tm[from].transitions[*last].to_write = to_write;
-  tm[from].transitions[*last].movement = mv_c-1;
+  tm->states[from].transitions[*last].to = to;
+  tm->states[from].transitions[*last].in_tape = trigger;
+  tm->states[from].transitions[*last].to_write = to_write;
+  tm->states[from].transitions[*last].movement = mv_c-1;
   (*last)++;
 
-	if(tm[to].transitions == NULL)
+	if(tm->states[to].transitions == NULL)
 	{
-    if((tm[to].transitions = malloc(sizeof(transition))) == NULL)
+    if((tm->states[to].transitions = malloc(sizeof(transition))) == NULL)
     {
       return -1;
     }
-    tm[to].last_added = 0;
-		states_added++;
+    tm->states[to].last_added = 0;
+		tm->state_num++;
   }
 
 	return 0;
 }
 
 /* TODO */
-int run_step(const state *tm, tape *tape, int *pos, int *q)
+int run_step(const turing_machine *tm, int *pos, int *q)
 {
   int found = 0; /* Marks if the state is not found to stop the TM */
   int i;
  
-  for(i = 0; i <= tm[*q].last_added && !found; i++)
+  for(i = 0; i <= tm->states[*q].last_added && !found; i++)
   {  //printf("TRaNS: %c \n", tm[*q].transitions[i].in_tape);
-    if(tape->elements[*pos] == tm[*q].transitions[i].in_tape)
+    if(tm->tape->elements[*pos] == tm->states[*q].transitions[i].in_tape)
     {
-			if(tape->size <= (*pos)+1) /* The tape could be too small */
+			if(tm->tape->size <= (*pos)+1) /* The tape could be too small */
 			{
-				char *elems = malloc(++(tape->size));
-				memcpy(elems, tape->elements, tape->size);
-				tape->elements = elems;
-printf("ergh %c ", tape->elements[(*pos)]);
+				char *elems = malloc(++(tm->tape->size));
+				memcpy(elems, tm->tape->elements, tm->tape->size);
+				tm->tape->elements = elems;
 
-				tape->elements[(*pos)+1] = '2';
+				tm->tape->elements[(*pos)+1] = '2';
 			}
-      tape->elements[*pos] = tm[*q].transitions[i].to_write; /* Write to tape */
-			printf("TAPE POS: %d, MOVE: %d, Q: %d, TO: %d, WRITTEN: %c, SIZE: %d", *pos, tm[*q].transitions[i].movement, *q , tm[*q].transitions[i].to,tape->elements[*pos], tape->size);
-      if((*pos += tm[*q].transitions[i].movement) < 0) (*pos)++; /* Move tape position */
-      *q = tm[*q].transitions[i].to; /* Change state */ 
+      tm->tape->elements[*pos] = tm->states[*q].transitions[i].to_write; /* Write to tape */
+			//printf("TAPE POS: %d, MOVE: %d, Q: %d, TO: %d, WRITTEN: %c, SIZE: %d", *pos, tm[*q].transitions[i].movement, *q , tm[*q].transitions[i].to,tape->elements[*pos], tape->size);
+      if((*pos += tm->states[*q].transitions[i].movement) < 0) (*pos)++; /* Move tape position */
+      *q = tm->states[*q].transitions[i].to; /* Change state */ 
       found = 1;
     }
   }
@@ -139,9 +156,9 @@ printf("ergh %c ", tape->elements[(*pos)]);
   return found ? 1 : 0;
 }
 
-int run_all(const state *tm, tape *tape, int *pos, int *q)
+int run_all(const turing_machine *tm, int *pos, int *q)
 {
-	while(run_step(tm, tape, pos, q) > 0);
+	while(run_step(tm, pos, q) > 0);
 	return *q;
 }
 
@@ -176,20 +193,26 @@ void print_tape(tape tape, int pos)
   int c;
   for( c = 0; c < tape.size; c++)
   {
-    if(c==pos)
-    {
-      printf(" [%c] ", tape.elements[c]);
-    }
-    else
-    {
-      printf("  %c  ", tape.elements[c]);
-    }
+	  if(c == pos)
+	  {
+			if(tape.elements[c] != '2')
+	    	printf(" [%c] ", tape.elements[c]);
+			else
+				printf(" [ ] ");
+	  }
+	  else
+	  {
+			if(tape.elements[c] != '2')
+	    	printf("  %c  ", tape.elements[c]);
+			else
+				printf("     ");
+	  }
   }
   printf("]\n");
 }
 
 /* PRIVATE */
-int parse_tm_file(const char *filename, state **tm)
+int parse_tm_file(const char *filename, turing_machine **tm)
 {
 		FILE *f;
 		if((f = fopen(filename, "r")) == NULL)
