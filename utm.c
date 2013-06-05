@@ -45,12 +45,12 @@ int main(int argc, char *argv[])
 	}
 
 	printf("Press 'a' to run the TM until the end. Press another key to run a step. ");
-  print_tape(*(tm->tape), 0);
+  print_tape(tm, 0);
 	while((opt = getchar()) != 'a')
 	{
 			printf("Running step:");
 			res = run_step(tm, &pos_in, &q);
-			print_tape(*(tm->tape), pos_in);
+			print_tape(tm, pos_in);
 
 			if(res <= 0)
 			{
@@ -61,7 +61,7 @@ int main(int argc, char *argv[])
 	{
 		printf("Running until the end (warning: the TM could never finish)...\n");
 		run_all(tm, &pos_in, &q);
-		print_tape(*(tm->tape), pos_in);
+		print_tape(tm, pos_in);
 	}
 
 	

@@ -22,13 +22,16 @@ int parse_file(FILE *f, turing_machine *tm)
 		sym_count = syms = 0;
 		while((c = fgetc(f)) != EOF && c != '}')
 		{
-			if(sym_count++%2 && c != ',')	
+			if(sym_count++%2 && c != ',')	/* Check correct formatting of the symbol input */
 			{
 				return -1;
 			}
 			else
 			{
-				/*add_symbol(symbols, syms++, c);*/
+        if(sym_count % 2) /* Only add the symbols, not the comma */
+        {
+				  add_symbol(tm, syms++, c);
+        }
 			}
 		}
 		fgetc(f); /*trim whitespace */
@@ -37,7 +40,9 @@ int parse_file(FILE *f, turing_machine *tm)
 	else
 	{
 		/* Standard {0, 1, b} */
-		/* symbols = ['0', '1', 'b'] */
+		add_symbol(tm, 0, '0');
+    add_symbol(tm, 1, '1');
+    add_symbol(tm, 2, 'b');
 	}
 
   /* Read 4 first 1s */ 
@@ -61,7 +66,7 @@ int parse_file(FILE *f, turing_machine *tm)
       (mv_c = count_zeros(f, &c)) < 0
     ) return -1;
 
-    if((add_to_tm(tm, --from, (--trigger)+'0', --to, (--to_write)+'0', --mv_c)) < 0)
+    if((add_to_tm(tm, --from, (--trigger), --to, (--to_write), --mv_c)) < 0)
     {
       return -1;
     }

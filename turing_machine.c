@@ -62,7 +62,27 @@ int destroy_tape(tape *tape) /* TODO */
 	return 0;
 }
 
-int add_to_tm(turing_machine *tm, const int from, const char trigger, const int to, const char to_write, const int mv_c)
+int add_symbol(turing_machine *tm, const int sym_index, const char symbol)
+{
+  if(sym_index+1 > tm->symbol_num)
+  {
+    char *tmp_sym_ptr = NULL;
+    if(( tmp_sym_ptr = malloc( sizeof(char)*(++tm->symbol_num) )) == NULL || 
+        (tm->symbols = memcpy(tmp_sym_ptr, 
+                              tm->symbols, 
+                              sizeof(char)*( tm->symbol_num-1 )
+                              )) == NULL)
+    {
+      return -1;
+    }
+  }
+
+  tm->symbols[sym_index] = symbol;
+
+  return 0;
+}
+
+int add_to_tm(turing_machine *tm, const int from, const int trigger, const int to, const int to_write, const int mv_c)
 {
   if(manage_state_memory(tm, from, to) < 0 ) /* There might be more states than memory allocated for them */
   {
@@ -74,10 +94,10 @@ int add_to_tm(turing_machine *tm, const int from, const char trigger, const int 
     return -1;
   }
 
-  int *last = &(tm->states[from].next_to_add); /* It's tedious to use the complete name all the time */
+  int *last = &(tm->states[from].next_state_to_add); /* It's tedious to use the complete name all the time */
   tm->states[from].transitions[*last].to = to;
-  tm->states[from].transitions[*last].in_tape = trigger;
-  tm->states[from].transitions[*last].to_write = to_write;
+  tm->states[from].transitions[*last].in_tape = tm->symbols[trigger];
+  tm->states[from].transitions[*last].to_write = tm->symbols[to_write];
   tm->states[from].transitions[*last].movement = mv_c-1;
   (*last)++;
 
@@ -89,7 +109,7 @@ int run_step(const turing_machine *tm, int *pos, int *q)
   int found = 0; /* Marks if the state is not found to stop the TM */
   int i;
  
-  for(i = 0; tm->states[*q].transitions != NULL && i <= tm->states[*q].next_to_add && !found; i++) /* Check all transitions. Those uninitialized are states without transitions so we must avoid them to avoid segfault (it would try it for the first trans) */
+  for(i = 0; tm->states[*q].transitions != NULL && i <= tm->states[*q].next_state_to_add && !found; i++) /* Check all transitions. Those uninitialized are states without transitions so we must avoid them to avoid segfault (it would try it for the first trans) */
   {  
     if(tm->tape->elements[*pos] == tm->states[*q].transitions[i].in_tape) /* What is in the tape is in a transition */
     {
@@ -101,7 +121,7 @@ int run_step(const turing_machine *tm, int *pos, int *q)
           return -1;
         }
 
-				tm->tape->elements[(*pos)+1] = '2'; /* TODO  blank instead of 2 */
+				tm->tape->elements[(*pos)+1] = tm->symbols[2];
 			}
 
       tm->tape->elements[*pos] = tm->states[*q].transitions[i].to_write; /* Write to tape */
@@ -145,23 +165,23 @@ int read_tape(tape *tape)
 	return 0;
 }
 
-void print_tape(tape tape, int pos)
+void print_tape(turing_machine *tm, int pos)
 {
   printf("\n[");
   int c;
-  for( c = 0; c < tape.size; c++)
+  for( c = 0; c < tm->tape->size; c++)
   {
 	  if(c == pos)
 	  {
-			if(tape.elements[c] != '2')
-	    	printf(" [%c] ", tape.elements[c]);
+			if(tm->tape->elements[c] != tm->symbols[2])
+	    	printf(" [%c] ", tm->tape->elements[c]);
 			else
 				printf(" [ ] ");
 	  }
 	  else
 	  {
-			if(tape.elements[c] != '2')
-	    	printf("  %c  ", tape.elements[c]);
+			if(tm->tape->elements[c] != tm->symbols[2])
+	    	printf("  %c  ", tm->tape->elements[c]);
 			else
 				printf("     ");
 	  }
@@ -202,7 +222,7 @@ int alloc_and_init(turing_machine **tm)
   for(i=0; i<INITIAL_STATES; i++) /* Set internal ptrs to null */
   {
     (*tm)->states[i].transitions = NULL;
-    (*tm)->states[i].next_to_add = 0;
+    (*tm)->states[i].next_state_to_add = 0;
   }
 
 	if(init_tape(&((*tm)->tape)) < 0)
@@ -210,8 +230,14 @@ int alloc_and_init(turing_machine **tm)
     return -1;
   }
 
+	if(((*tm)->symbols = malloc(sizeof(char)*INITIAL_SYMBOL_NUM)) == NULL) /* Symbols alloc */
+  {
+    return -1;
+  }
+
 	(*tm)->state_num = 0;
 	(*tm)->max_states = INITIAL_STATES;
+  (*tm)->symbol_num = 0;
 
   return 0;
 }
@@ -235,18 +261,18 @@ int manage_state_memory(turing_machine *tm, const int from, const int to)
     for(i = 0; i < tm->max_states; i++) /* Set all new pointers to NULL */
     {
       tmp_state_ptr[i].transitions = NULL;
-      tmp_state_ptr[i].next_to_add = 0;
+      tmp_state_ptr[i].next_state_to_add = 0;
     }
     for(i = 0; i < tm->state_num; i++)  /* Copy contents */
     {
-      tmp_state_ptr[i].next_to_add = tm->states[i].next_to_add;
+      tmp_state_ptr[i].next_state_to_add = tm->states[i].next_state_to_add;
 
       if(tm->states[i].transitions != NULL) /* Don't alloc if we have no data */
       {
-        tmp_state_ptr[i].transitions = malloc(sizeof(transition)*((tm->states[i].next_to_add)+1));
+        tmp_state_ptr[i].transitions = malloc(sizeof(transition)*((tm->states[i].next_state_to_add)+1));
 
         int j;
-        for(j = 0; j < tm->states[i].next_to_add; j++)
+        for(j = 0; j < tm->states[i].next_state_to_add; j++)
         {
           tmp_state_ptr[i].transitions[j] = tm->states[i].transitions[j];
         }
@@ -268,16 +294,16 @@ int manage_transitions_memory(turing_machine *tm, const int from)
       return -1;
     }
 
-    tm->states[from].next_to_add = 0;
+    tm->states[from].next_state_to_add = 0;
 		tm->state_num++; /* It was never used before so we didn't count it. Now we do */
   }
   else /* Resize the transitions memory to put a new one */
   {
 		transition *tmp_trans_ptr = NULL;
-    if(( tmp_trans_ptr = malloc( sizeof(transition)*(( tm->states[from].next_to_add )+1) )) == NULL || 
+    if(( tmp_trans_ptr = malloc( sizeof(transition)*(( tm->states[from].next_state_to_add )+1) )) == NULL || 
         (tm->states[from].transitions = memcpy(tmp_trans_ptr, 
                                                 tm->states[from].transitions, 
-                                                sizeof(transition)*( tm->states[from].next_to_add )
+                                                sizeof(transition)*( tm->states[from].next_state_to_add )
                                               )) == NULL)
     {
       return -1;

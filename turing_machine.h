@@ -2,6 +2,7 @@
 #define _TURING_MACHINE_
 #define MAX_SIZE 50
 #define INITIAL_STATES 1
+#define INITIAL_SYMBOL_NUM 3
 
 typedef enum {
   LEFT = -1,
@@ -17,7 +18,7 @@ typedef struct _transition {
 } transition;
 
 typedef struct _state {
-  int next_to_add;
+  int next_state_to_add;
   transition *transitions;
 } state;
 
@@ -29,8 +30,10 @@ typedef struct _tape {
 typedef struct _turing_machine {
 	state *states;
 	tape *tape;
+  char *symbols;
 	int state_num;
 	int max_states;
+  int symbol_num;
 } turing_machine;
 
 #endif
@@ -41,8 +44,9 @@ int destroy_tm(turing_machine**);
 int init_tape(tape**);
 int destroy_tape(tape*);
 
-int add_to_tm(turing_machine*, const int, const char, const int, const char, const int);
+int add_to_tm(turing_machine*, const int, const int, const int, const int, const int);
+int add_symbol(turing_machine*, const int, const char);
 int run_step(const turing_machine*, int*, int*);
 int run_all(const turing_machine*, int*, int*);
 int read_tape(tape*);
-void print_tape(tape, int);
+void print_tape(turing_machine*, int);
