@@ -1,7 +1,7 @@
 #ifndef _TURING_MACHINE_
 #define _TURING_MACHINE_
 #define MAX_SIZE 50
-#define INITIAL_STATES 5
+#define INITIAL_STATES 1
 
 typedef enum {
   LEFT = -1,
@@ -17,7 +17,7 @@ typedef struct _transition {
 } transition;
 
 typedef struct _state {
-  int last_added;
+  int next_to_add;
   transition *transitions;
 } state;
 

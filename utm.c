@@ -7,7 +7,6 @@ int main(int argc, char *argv[])
 {
   turing_machine *tm; /* The pointer will contain [q0 | q1 | q2 | ... | qn], each qn will contain [rule1 | rule2 | ... | rulen ] */
 	char opt;
-	//tape *tape_in;
 	int q = 0, pos_in = 0, res;
 
   if(argc < 2) /* No args: input from stdin */
@@ -34,6 +33,7 @@ int main(int argc, char *argv[])
   else /* Incorrect arg number */
   {
     printf("Universal Turing Machine \nUsage: %s [file]\nArguments: \n\tfile: text file containing the machine encoding.\n", argv[0]);
+    return -1;
   }
 
 	printf("Enter the input tape without spaces.\n");
@@ -66,7 +66,6 @@ int main(int argc, char *argv[])
 
 	
 	/* Memory freeing */
-	//destroy_tape(tape_in);
 	destroy_tm(&tm);
 
 	return 0; 

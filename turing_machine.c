@@ -11,25 +11,35 @@ int parse_tm_file(const char*, turing_machine**);
 /* Function implementation */
 int init_from_file(const char* file_name, turing_machine **tm)
 {
-	if(((*tm) = malloc(sizeof(turing_machine))) == NULL)
+	if(((*tm) = malloc(sizeof(turing_machine))) == NULL) /* TM alloc */
   {
     return -1;
   }
-	if(((*tm)->states = malloc(sizeof(state)*INITIAL_STATES)) == NULL)
+
+	if(((*tm)->states = malloc(sizeof(state)*INITIAL_STATES)) == NULL) /* State alloc */
   {
     return -1;
   }
+  int i;
+  for(i=0; i<INITIAL_STATES; i++) /* Set internal ptrs to null */
+  {
+    (*tm)->states[i].transitions = NULL;
+    (*tm)->states[i].next_to_add = 0;
+  }
+
 	if(init_tape(&((*tm)->tape)) < 0)
   {
     return -1;
   }
+
+	(*tm)->state_num = 0;
+	(*tm)->max_states = INITIAL_STATES;
+
 	if(parse_tm_file(file_name, tm) < 0) 
 	{
 		return -1;
 	}
 
-	(*tm)->state_num = 0;
-	(*tm)->max_states = INITIAL_STATES;
 	return 0;
 }
 
@@ -47,6 +57,10 @@ int init_from_stdin(turing_machine **tm)
   {
     return -1;
   }
+
+	(*tm)->state_num = 0;
+	(*tm)->max_states = INITIAL_STATES;
+
   if(parse_file(stdin, tm) < 0)
   {
     return -1;
@@ -78,31 +92,58 @@ int destroy_tape(tape *tape) /* TODO */
 int add_to_tm(turing_machine **tm_ptr, const int from, const char trigger, const int to, const char to_write, const int mv_c)
 {
   turing_machine *tm = *tm_ptr;
-  int *last = &(tm->states[from].last_added); /* It's tedious to use the complete name all the time */
+  int *last = &(tm->states[from].next_to_add); /* It's tedious to use the complete name all the time */
 
-  if(tm->state_num > tm->max_states || to > tm->max_states)
+  if(tm->state_num > tm->max_states || to >= tm->max_states) /* There might be more states than memory allocated for them */
   {
-    tm->max_states += INITIAL_STATES;
-		state *tmp_state_ptr;
-    if((tmp_state_ptr = malloc(sizeof(state)*(tm->max_states))) == NULL || (tm->states = memcpy(tmp_state_ptr, tm->states, tm->max_states)) == NULL)
+    while((tm->max_states += INITIAL_STATES) <= to);
+
+		state *tmp_state_ptr = NULL;
+
+    if((tmp_state_ptr = malloc(sizeof(state)*(tm->max_states))) == NULL)
     {
       return -1;
     }
+    
+    int i;
+    for(i = 0; i < tm->max_states; i++) /* Set all new pointers to NULL */
+    {
+      tmp_state_ptr[i].transitions = NULL;
+      tmp_state_ptr[i].next_to_add = 0;
+    }
+    for(i = 0; i < tm->state_num; i++)  /* Copy contents */
+    {
+      tmp_state_ptr[i].next_to_add = tm->states[i].next_to_add;
+
+      tmp_state_ptr[i].transitions = malloc(sizeof(transition)*((tm->states[i].next_to_add)+1));
+
+      int j;
+      for(j = 0; j < tm->states[i].next_to_add; j++)
+      {
+        tmp_state_ptr[i].transitions[j] = tm->states[i].transitions[j];
+      }
+    }
+  
+    tm->states->transitions = tmp_state_ptr->transitions;
   }
 
-  if(tm->states[from].transitions == NULL)
+  if(tm->states[from].transitions == NULL) /* Allocate memory for the first transition */
   {
     if((tm->states[from].transitions = malloc(sizeof(transition))) == NULL)
     {
       return -1;
     }
+
     *last = 0;
 		tm->state_num++;
   }
-  else
+  else /* Resize the transitions memory to put a new one */
   {
-		transition *tmp_trans_ptr;
-    if((tmp_trans_ptr = malloc(sizeof(transition)*((*last)+1))) == NULL || (tm->states[from].transitions = memcpy(tmp_trans_ptr, tm->states[from].transitions, sizeof(transition)*((*last)+1))) == NULL)
+		transition *tmp_trans_ptr = NULL;
+    if(( tmp_trans_ptr = malloc( sizeof(transition)*((*last)+1) )) == NULL || 
+        (tm->states[from].transitions = memcpy(tmp_trans_ptr, 
+                                                tm->states[from].transitions, 
+                                                sizeof(transition)*(*last))) == NULL)
     {
       return -1;
     }
@@ -114,42 +155,43 @@ int add_to_tm(turing_machine **tm_ptr, const int from, const char trigger, const
   tm->states[from].transitions[*last].movement = mv_c-1;
   (*last)++;
 
-	if(tm->states[to].transitions == NULL)
+	if(tm->states[to].transitions == NULL) /* We know that there is a new state */
 	{
     if((tm->states[to].transitions = malloc(sizeof(transition))) == NULL)
     {
       return -1;
     }
-    tm->states[to].last_added = 0;
+    tm->states[to].next_to_add = 0;
 		tm->state_num++;
   }
 
 	return 0;
 }
 
-/* TODO */
 int run_step(const turing_machine *tm, int *pos, int *q)
 {
   int found = 0; /* Marks if the state is not found to stop the TM */
   int i;
  
-  for(i = 0; i <= tm->states[*q].last_added && !found; i++)
-  {  //printf("TRaNS: %c \n", tm[*q].transitions[i].in_tape);
+  for(i = 0; i <= tm->states[*q].next_to_add && !found; i++)
+  {  
     if(tm->tape->elements[*pos] == tm->states[*q].transitions[i].in_tape)
     {
 			if(tm->tape->size <= (*pos)+1) /* The tape could be too small */
 			{
-				char *elems = malloc(++(tm->tape->size));
-				memcpy(elems, tm->tape->elements, tm->tape->size);
-				tm->tape->elements = elems;
+				char *elems = NULL;
+        if( (elems = malloc(++(tm->tape->size))) == NULL || (tm->tape->elements = memcpy(elems, tm->tape->elements, tm->tape->size)) == NULL )
+        {
+          return -1;
+        }
 
-				tm->tape->elements[(*pos)+1] = '2';
+				tm->tape->elements[(*pos)+1] = '2'; /* TODO  blank instead of 2 */
 			}
+
       tm->tape->elements[*pos] = tm->states[*q].transitions[i].to_write; /* Write to tape */
-			//printf("TAPE POS: %d, MOVE: %d, Q: %d, TO: %d, WRITTEN: %c, SIZE: %d", *pos, tm[*q].transitions[i].movement, *q , tm[*q].transitions[i].to,tape->elements[*pos], tape->size);
-      if((*pos += tm->states[*q].transitions[i].movement) < 0) (*pos)++; /* Move tape position */
+      if((*pos += tm->states[*q].transitions[i].movement) < 0) (*pos)++; /* Move tape position and always put it to 0 if goes under it */
       *q = tm->states[*q].transitions[i].to; /* Change state */ 
-      found = 1;
+      found = 1; 
     }
   }
 
