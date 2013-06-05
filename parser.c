@@ -12,7 +12,7 @@ int is_valid(char);
 int parse_file(FILE *f, turing_machine *tm)
 {
   char c;
-  int i, from, to, to_write, trigger, mv_c, sym_count, syms;
+  int i, from, to, to_write, trigger, mv_c, sym_count, syms, state_read;
   
   /* Skip comments */
   while((c = fgetc(f)) != EOF && c == 'c' && skip_line(f) != EOF);
@@ -43,6 +43,28 @@ int parse_file(FILE *f, turing_machine *tm)
 		add_symbol(tm, 0, '0');
     add_symbol(tm, 1, '1');
     add_symbol(tm, 2, 'b');
+	}
+
+	if(c == '[') /* Final states */
+	{
+		while(fscanf(f, "%d%c", &state_read, &c) != EOF)
+		{
+			if(c != ',' && c != ']')	/* Check correct formatting of the symbol input */
+			{
+				return -1;
+			}
+			else
+			{
+				add_final_state(tm, state_read);
+			}
+
+      if(c == ']')
+      {
+        break;
+      }
+		}
+		fgetc(f); /*trim whitespace */
+		c = fgetc(f);
 	}
 
   /* Read 4 first 1s */ 

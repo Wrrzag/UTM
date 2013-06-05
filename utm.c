@@ -52,7 +52,7 @@ int main(int argc, char *argv[])
 			res = run_step(tm, &pos_in, &q);
 			print_tape(tm, pos_in);
 
-			if(res <= 0)
+			if(res == TRANSITION_NOT_FOUND || res == END_STATE)
 			{
 				break;	
 			}
@@ -60,11 +60,15 @@ int main(int argc, char *argv[])
 	if(opt == 'a')
 	{
 		printf("Running until the end (warning: the TM could never finish)...\n");
-		run_all(tm, &pos_in, &q);
+		res = run_all(tm, &pos_in, &q);
 		print_tape(tm, pos_in);
 	}
 
-	
+	if(res == END_STATE)
+  {
+    printf("\nYES\n");
+  }
+
 	/* Memory freeing */
 	destroy_tm(&tm);
 
