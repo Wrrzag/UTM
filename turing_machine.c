@@ -8,7 +8,7 @@
 /* Private declarations */
 int parse_tm_file(const char*, turing_machine*);
 int alloc_and_init(turing_machine**);
-int manage_state_memory(turing_machine*, const int);
+int manage_state_memory(turing_machine*, const int, const int);
 int manage_transitions_memory(turing_machine*, const int);
 
 /* Function implementation */
@@ -64,9 +64,7 @@ int destroy_tape(tape *tape) /* TODO */
 
 int add_to_tm(turing_machine *tm, const int from, const char trigger, const int to, const char to_write, const int mv_c)
 {
-  int *last = &(tm->states[from].next_to_add); /* It's tedious to use the complete name all the time */
-
-  if(manage_state_memory(tm, to) < 0 ) /* There might be more states than memory allocated for them */
+  if(manage_state_memory(tm, from, to) < 0 ) /* There might be more states than memory allocated for them */
   {
     return -1;
   }
@@ -76,21 +74,12 @@ int add_to_tm(turing_machine *tm, const int from, const char trigger, const int 
     return -1;
   }
 
+  int *last = &(tm->states[from].next_to_add); /* It's tedious to use the complete name all the time */
   tm->states[from].transitions[*last].to = to;
   tm->states[from].transitions[*last].in_tape = trigger;
   tm->states[from].transitions[*last].to_write = to_write;
   tm->states[from].transitions[*last].movement = mv_c-1;
   (*last)++;
-
-	if(tm->states[to].transitions == NULL) /* We know that there is a new uninitialized state */
-	{
-    if((tm->states[to].transitions = malloc(sizeof(transition))) == NULL)
-    {
-      return -1;
-    }
-    tm->states[to].next_to_add = 0;
-		tm->state_num++;
-  }
 
 	return 0;
 }
@@ -100,7 +89,7 @@ int run_step(const turing_machine *tm, int *pos, int *q)
   int found = 0; /* Marks if the state is not found to stop the TM */
   int i;
  
-  for(i = 0; i <= tm->states[*q].next_to_add && !found; i++) /* Check all transitions */
+  for(i = 0; tm->states[*q].transitions != NULL && i <= tm->states[*q].next_to_add && !found; i++) /* Check all transitions. Those uninitialized are states without transitions so we must avoid them to avoid segfault (it would try it for the first trans) */
   {  
     if(tm->tape->elements[*pos] == tm->states[*q].transitions[i].in_tape) /* What is in the tape is in a transition */
     {
@@ -227,11 +216,13 @@ int alloc_and_init(turing_machine **tm)
   return 0;
 }
 
-int manage_state_memory(turing_machine *tm, const int to)
+int manage_state_memory(turing_machine *tm, const int from, const int to)
 {
-  if(tm->state_num > tm->max_states || to >= tm->max_states)
+  int max_arg = from > to ? from : to;
+
+  if(tm->state_num > tm->max_states || max_arg >= tm->max_states)
   {
-    while((tm->max_states += INITIAL_STATES) <= to);
+    while((tm->max_states += INITIAL_STATES) <= max_arg);
 
 		state *tmp_state_ptr = NULL;
 
@@ -250,12 +241,15 @@ int manage_state_memory(turing_machine *tm, const int to)
     {
       tmp_state_ptr[i].next_to_add = tm->states[i].next_to_add;
 
-      tmp_state_ptr[i].transitions = malloc(sizeof(transition)*((tm->states[i].next_to_add)+1));
-
-      int j;
-      for(j = 0; j < tm->states[i].next_to_add; j++)
+      if(tm->states[i].transitions != NULL) /* Don't alloc if we have no data */
       {
-        tmp_state_ptr[i].transitions[j] = tm->states[i].transitions[j];
+        tmp_state_ptr[i].transitions = malloc(sizeof(transition)*((tm->states[i].next_to_add)+1));
+
+        int j;
+        for(j = 0; j < tm->states[i].next_to_add; j++)
+        {
+          tmp_state_ptr[i].transitions[j] = tm->states[i].transitions[j];
+        }
       }
     }
   
@@ -275,7 +269,7 @@ int manage_transitions_memory(turing_machine *tm, const int from)
     }
 
     tm->states[from].next_to_add = 0;
-		tm->state_num++;
+		tm->state_num++; /* It was never used before so we didn't count it. Now we do */
   }
   else /* Resize the transitions memory to put a new one */
   {

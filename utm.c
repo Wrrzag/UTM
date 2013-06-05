@@ -5,7 +5,7 @@
 
 int main(int argc, char *argv[])
 {
-  turing_machine *tm; /* The pointer will contain [q0 | q1 | q2 | ... | qn], each qn will contain [rule1 | rule2 | ... | rulen ] */
+  turing_machine *tm = NULL;
 	char opt;
 	int q = 0, pos_in = 0, res;
 
