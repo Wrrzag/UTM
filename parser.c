@@ -9,7 +9,7 @@ int count_zeros(FILE *, char*);
 int is_valid(char);
 
 /* Public functions implementation */
-int parse_file(FILE *f, turing_machine **tm)
+int parse_file(FILE *f, turing_machine *tm)
 {
   char c;
   int i, from, to, to_write, trigger, mv_c, sym_count, syms;

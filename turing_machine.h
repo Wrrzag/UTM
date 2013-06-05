@@ -41,7 +41,7 @@ int destroy_tm(turing_machine**);
 int init_tape(tape**);
 int destroy_tape(tape*);
 
-int add_to_tm(turing_machine**, const int, const char, const int, const char, const int);
+int add_to_tm(turing_machine*, const int, const char, const int, const char, const int);
 int run_step(const turing_machine*, int*, int*);
 int run_all(const turing_machine*, int*, int*);
 int read_tape(tape*);

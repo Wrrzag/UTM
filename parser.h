@@ -4,4 +4,4 @@
 #include <stdio.h>
 #endif
 
-int parse_file(FILE*, turing_machine**);
+int parse_file(FILE*, turing_machine*);
