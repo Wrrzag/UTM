@@ -7,7 +7,11 @@
 
 /* Private declarations */
 ret_t init_tape(tape**);
-ret_t destroy_tape(tape**);
+ret_t destroy_tape(turing_machine**);
+ret_t destroy_states(turing_machine**);
+ret_t destroy_symbols(turing_machine**);
+ret_t destroy_final_states(turing_machine**);
+
 ret_t parse_tm_file(const char*, turing_machine*);
 ret_t alloc_and_init(turing_machine**);
 ret_t manage_state_memory(turing_machine*, const unsigned long, const unsigned long);
@@ -62,18 +66,48 @@ ret_t init_tape(tape **tape)
 
 ret_t destroy_tm(turing_machine **tm) /* TODO */
 {
-  destroy_tape(&((*tm)->tape));
+  destroy_states(tm);
+  destroy_symbols(tm);
+  destroy_final_states(tm);
+  destroy_tape(tm);
 
   return OK;
 }
 
-ret_t destroy_tape(tape **tape) /* TODO */
+ret_t destroy_states(turing_machine **tm)
 {
-  free((*tape)->elements);
-  (*tape)->elements = NULL;
+  free((*tm)->states->transitions);
+  (*tm)->states->transitions = NULL;
 
-  free(*tape);
-  *tape = NULL;
+  free((*tm)->states);
+  (*tm)->states = NULL;
+
+  return OK;
+}
+
+ret_t destroy_symbols(turing_machine **tm)
+{
+  free((*tm)->symbols);
+  (*tm)->symbols = NULL;
+
+  return OK;
+}
+
+ret_t destroy_final_states(turing_machine **tm)
+{
+  free((*tm)->final_states);
+  (*tm)->final_states = NULL;
+
+  return OK;
+}
+
+ret_t destroy_tape(turing_machine **tm) /* TODO */
+{
+  free((*tm)->tape->elements);
+  (*tm)->tape->elements = NULL;
+
+  free((*tm)->tape);
+  (*tm)->tape = NULL;
 
 	return OK;
 }
