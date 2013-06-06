@@ -7,7 +7,8 @@ int main(int argc, char *argv[])
 {
   turing_machine *tm = NULL;
 	char opt;
-	int q = 0, pos_in = 0, res;
+	unsigned long q = 0, pos_in = 0;
+  int res;
 
   if(argc < 2) /* No args: input from stdin */
   {
@@ -38,7 +39,7 @@ int main(int argc, char *argv[])
 
 	printf("Enter the input tape without spaces.\n");
 
-	if(init_tape(&(tm->tape)) < 0 || read_tape(tm->tape) < 0 )
+	if(read_tape(tm) < 0 )
 	{
 		printf("Error allocating memory\n");
 		return -1;

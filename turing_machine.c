@@ -6,10 +6,12 @@
 #include <string.h>
 
 /* Private declarations */
+ret_t init_tape(tape**);
+ret_t destroy_tape(tape**);
 ret_t parse_tm_file(const char*, turing_machine*);
 ret_t alloc_and_init(turing_machine**);
-ret_t manage_state_memory(turing_machine*, const int, const int);
-ret_t manage_transitions_memory(turing_machine*, const int);
+ret_t manage_state_memory(turing_machine*, const unsigned long, const unsigned long);
+ret_t manage_transitions_memory(turing_machine*, const unsigned long);
 
 /* Function implementation */
 ret_t init_from_file(const char* file_name, turing_machine **tm)
@@ -44,25 +46,39 @@ ret_t init_from_stdin(turing_machine **tm)
 
 ret_t init_tape(tape **tape)
 {
-	if((*tape = malloc(MAX_SIZE*sizeof(tape))) == NULL)
+	if((*tape = malloc(sizeof(tape))) == NULL)
 	{
 		return ALLOC_ERROR;
 	}
+  if(((*tape)->elements = malloc(sizeof(char) * TAPE_INITIAL_SIZE)) == NULL)
+  {
+    return ALLOC_ERROR;
+  }
+
+  (*tape)->size = TAPE_INITIAL_SIZE;
 
 	return OK;
 }
 
 ret_t destroy_tm(turing_machine **tm) /* TODO */
 {
+  destroy_tape(&((*tm)->tape));
+
   return OK;
 }
 
-ret_t destroy_tape(tape *tape) /* TODO */
+ret_t destroy_tape(tape **tape) /* TODO */
 {
+  free((*tape)->elements);
+  (*tape)->elements = NULL;
+
+  free(*tape);
+  *tape = NULL;
+
 	return OK;
 }
 
-ret_t add_symbol(turing_machine *tm, const int sym_index, const char symbol)
+ret_t add_symbol(turing_machine *tm, const unsigned long sym_index, const char symbol)
 {
   if(sym_index+1 > tm->symbol_num)
   {
@@ -82,10 +98,10 @@ ret_t add_symbol(turing_machine *tm, const int sym_index, const char symbol)
   return OK;
 }
 
-ret_t add_final_state(turing_machine *tm, const int state)
+ret_t add_final_state(turing_machine *tm, const unsigned long state)
 {
-  int *tmp_state_ptr = NULL;
-  if(( tmp_state_ptr = malloc( sizeof(int)*(1+tm->final_state_count) )) == NULL)
+  unsigned long *tmp_state_ptr = NULL;
+  if(( tmp_state_ptr = malloc( sizeof(unsigned long)*(1+tm->final_state_count) )) == NULL)
   {
     return ALLOC_ERROR;
   }
@@ -93,7 +109,7 @@ ret_t add_final_state(turing_machine *tm, const int state)
   {
     if((tm->final_states = memcpy(tmp_state_ptr, 
                               tm->final_states, 
-                              sizeof(int)*( tm->final_state_count )
+                              sizeof(unsigned long)*( tm->final_state_count )
                               )) == NULL)
     {
       return ALLOC_ERROR;
@@ -109,7 +125,7 @@ ret_t add_final_state(turing_machine *tm, const int state)
   return OK;
 }
 
-ret_t add_to_tm(turing_machine *tm, const int from, const int trigger, const int to, const int to_write, const int mv_c)
+ret_t add_to_tm(turing_machine *tm, const unsigned long from, const unsigned long trigger, const unsigned long to, const unsigned long to_write, const unsigned long mv_c)
 {
   if(manage_state_memory(tm, from, to) < 0 ) /* There might be more states than memory allocated for them */
   {
@@ -121,7 +137,7 @@ ret_t add_to_tm(turing_machine *tm, const int from, const int trigger, const int
     return ALLOC_ERROR;
   }
 
-  int *last = &(tm->states[from].next_state_to_add); /* It's tedious to use the complete name all the time */
+  unsigned long *last = &(tm->states[from].next_state_to_add); /* It's tedious to use the complete name all the time */
   tm->states[from].transitions[*last].to = to;
   tm->states[from].transitions[*last].in_tape = tm->symbols[trigger];
   tm->states[from].transitions[*last].to_write = tm->symbols[to_write];
@@ -131,10 +147,10 @@ ret_t add_to_tm(turing_machine *tm, const int from, const int trigger, const int
 	return OK;
 }
 
-ret_t run_step(const turing_machine *tm, int *pos, int *q)
+ret_t run_step(const turing_machine *tm, unsigned long *pos, unsigned long *q)
 {
   int found = 0; /* Marks if the state is not found to stop the TM */
-  int i;
+  unsigned long i;
  
   for(i = 0; tm->states[*q].transitions != NULL && i <= tm->states[*q].next_state_to_add && !found; i++) /* Check all transitions. Those uninitialized are states without transitions so we must avoid them to avoid segfault (it would try it for the first trans) */
   {  
@@ -172,7 +188,7 @@ ret_t run_step(const turing_machine *tm, int *pos, int *q)
   return found ? TRANSITION_FOUND : TRANSITION_NOT_FOUND;
 }
 
-ret_t run_all(const turing_machine *tm, int *pos, int *q)
+ret_t run_all(const turing_machine *tm, unsigned long *pos, unsigned long *q)
 {
   ret_t ret_code;
 	while((ret_code = run_step(tm, pos, q)) != TRANSITION_NOT_FOUND && ret_code != END_STATE);
@@ -180,35 +196,34 @@ ret_t run_all(const turing_machine *tm, int *pos, int *q)
 	return ret_code;
 }
 
-ret_t read_tape(tape *tape)
+ret_t read_tape(turing_machine *tm)
 {
+  tape *tape = tm->tape;
+
 	char c;
-	unsigned int count = 0, max_size = MAX_SIZE;
+	unsigned long count = 0;
 	while((c = getchar()) != EOF && c != '\n')
 	{
 		tape->elements[count++] = c;
 		
-		if(count >= max_size)
+		if(count > tape->size)
 		{
-			max_size += MAX_SIZE;
-			
-			if((tape = realloc(tape, max_size)) == NULL)
+			tape->size++;
+
+			if((tape->elements = realloc(tape->elements, tape->size+1)) == NULL)
 			{
 					return ALLOC_ERROR;
 			}
 		}
 	}
 
-	tape->elements[count] = '\0';
-	tape->size = count;
-
 	return OK;
 }
 
-void print_tape(turing_machine *tm, int pos)
+void print_tape(turing_machine *tm, unsigned long pos)
 {
   printf("\n[");
-  int c;
+  unsigned long c;
   for( c = 0; c < tm->tape->size; c++)
   {
 	  if(c == pos)
@@ -249,16 +264,21 @@ ret_t parse_tm_file(const char *filename, turing_machine *tm)
 
 ret_t alloc_and_init(turing_machine **tm)
 {
-  if(((*tm) = malloc(sizeof(turing_machine))) == NULL) /* TM alloc */
+  if((*tm = malloc(sizeof(turing_machine))) == NULL) /* TM alloc */
   {
     return ALLOC_ERROR;
   }
+
+	(*tm)->states = NULL;
+	(*tm)->tape = NULL;
+  (*tm)->symbols = NULL;
+  (*tm)->final_states = NULL;
 
 	if(((*tm)->states = malloc(sizeof(state)*INITIAL_STATES)) == NULL) /* State alloc */
   {
     return ALLOC_ERROR;
   }
-  int i;
+  unsigned long i;
   for(i=0; i<INITIAL_STATES; i++) /* Set internal ptrs to null */
   {
     (*tm)->states[i].transitions = NULL;
@@ -284,9 +304,9 @@ ret_t alloc_and_init(turing_machine **tm)
   return OK;
 }
 
-ret_t manage_state_memory(turing_machine *tm, const int from, const int to)
+ret_t manage_state_memory(turing_machine *tm, const unsigned long from, const unsigned long to)
 {
-  int max_arg = from > to ? from : to;
+  unsigned long max_arg = from > to ? from : to;
 
   if(tm->state_num > tm->max_states || max_arg >= tm->max_states)
   {
@@ -299,7 +319,7 @@ ret_t manage_state_memory(turing_machine *tm, const int from, const int to)
       return ALLOC_ERROR;
     }
     
-    int i;
+    unsigned long i;
     for(i = 0; i < tm->max_states; i++) /* Set all new pointers to NULL */
     {
       tmp_state_ptr[i].transitions = NULL;
@@ -313,21 +333,22 @@ ret_t manage_state_memory(turing_machine *tm, const int from, const int to)
       {
         tmp_state_ptr[i].transitions = malloc(sizeof(transition)*((tm->states[i].next_state_to_add)+1));
 
-        int j;
+        unsigned long j;
         for(j = 0; j < tm->states[i].next_state_to_add; j++)
         {
           tmp_state_ptr[i].transitions[j] = tm->states[i].transitions[j];
         }
       }
     }
-  
-    tm->states->transitions = tmp_state_ptr->transitions;
+
+    free(tm->states->transitions);
+    tm->states = tmp_state_ptr;
   }
 
   return OK;
 }
 
-ret_t manage_transitions_memory(turing_machine *tm, const int from)
+ret_t manage_transitions_memory(turing_machine *tm, const unsigned long from)
 {
   if(tm->states[from].transitions == NULL) /* Allocate memory for the first transition */
   {

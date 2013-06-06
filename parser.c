@@ -12,7 +12,7 @@ int is_valid(char);
 int parse_file(FILE *f, turing_machine *tm)
 {
   char c;
-  int i, from, to, to_write, trigger, mv_c, sym_count, syms, state_read;
+  unsigned long i, from, to, to_write, trigger, mv_c, sym_count, syms, state_read;
   
   /* Skip comments */
   while((c = fgetc(f)) != EOF && c == 'c' && skip_line(f) != EOF);
@@ -47,7 +47,7 @@ int parse_file(FILE *f, turing_machine *tm)
 
 	if(c == '[') /* Final states */
 	{
-		while(fscanf(f, "%d%c", &state_read, &c) != EOF)
+		while(fscanf(f, "%li%c", &state_read, &c) != EOF)
 		{
 			if(c != ',' && c != ']')	/* Check correct formatting of the symbol input */
 			{
