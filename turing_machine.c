@@ -305,6 +305,11 @@ print_tape(turing_machine *tm, unsigned long pos)
   printf("]\n");
 }
 
+int has_final_states(turing_machine *tm)
+{
+	return tm->final_state_count ? 1 : 0;
+}
+
 /* PRIVATE */
 ret_t 
 parse_tm_file(const char *filename, turing_machine *tm)

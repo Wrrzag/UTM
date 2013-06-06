@@ -232,3 +232,17 @@ ret_t read_tape(turing_machine*);
 *
 */
 void print_tape(turing_machine*, unsigned long);
+
+
+/** Tells if the TM has any final state.
+*
+*	Params:
+*		A pointer to the Turing Machine to know whether there are final
+*	states or not
+*
+*	Returns:
+*		1 if there are final states
+*		0 if there is not any final state
+*
+*/
+int has_final_states(turing_machine*);

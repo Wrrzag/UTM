@@ -118,10 +118,17 @@ int main(int argc, char *argv[])
 		if(!quiet) print_tape(tm, pos_in);
 	}
 
-	if(res == END_STATE)
-  {
-    printf("\nYES\n");
-  }
+	if(has_final_states(tm))
+	{
+		if(res == END_STATE)
+		{
+		  printf("\nYES\n");
+		}
+		else
+		{
+			printf("\nNO\n");
+		}
+	}
 
 	/* Memory freeing */
 	destroy_tm(&tm);
