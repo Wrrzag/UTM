@@ -1,3 +1,13 @@
+/** parser.c
+*
+* Parses a TM file and provides the parsed data to the TM.
+*
+* Author: Marc Piñol <marcpinolpueyo@gmail.com>
+* Version: 0.20
+* License: GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>
+*
+*/
+
 #include "parser.h"
 
 #include <stdio.h>

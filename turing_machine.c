@@ -1,3 +1,15 @@
+/** turing_machine.c
+*
+* The TM methods implementation.
+*	Here are implemented all the TM methods used to create, destroy
+* and modify the TM.
+*
+* Author: Marc Piñol <marcpinolpueyo@gmail.com>
+* Version: 0.20
+* License: GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>
+*
+*/
+
 #include "turing_machine.h"
 #include "parser.h"
 
@@ -18,7 +30,8 @@ ret_t manage_state_memory(turing_machine*, const unsigned long, const unsigned l
 ret_t manage_transitions_memory(turing_machine*, const unsigned long);
 
 /* Function implementation */
-ret_t init_from_file(const char* file_name, turing_machine **tm)
+ret_t 
+init_from_file(const char* file_name, turing_machine **tm)
 {
 	if(alloc_and_init(tm) < 0)
   {
@@ -33,7 +46,8 @@ ret_t init_from_file(const char* file_name, turing_machine **tm)
 	return OK;
 }
 
-ret_t init_from_stdin(turing_machine **tm)
+ret_t 
+init_from_stdin(turing_machine **tm)
 {
   if(alloc_and_init(tm) < 0)
   {
@@ -48,7 +62,8 @@ ret_t init_from_stdin(turing_machine **tm)
 	return OK;
 }
 
-ret_t init_tape(tape **tape)
+ret_t 
+init_tape(tape **tape)
 {
 	if((*tape = malloc(sizeof(tape))) == NULL)
 	{
@@ -64,7 +79,8 @@ ret_t init_tape(tape **tape)
 	return OK;
 }
 
-ret_t destroy_tm(turing_machine **tm) /* TODO */
+ret_t 
+destroy_tm(turing_machine **tm) 
 {
   destroy_states(tm);
   destroy_symbols(tm);
@@ -74,7 +90,8 @@ ret_t destroy_tm(turing_machine **tm) /* TODO */
   return OK;
 }
 
-ret_t destroy_states(turing_machine **tm)
+ret_t 
+destroy_states(turing_machine **tm)
 {
   free((*tm)->states->transitions);
   (*tm)->states->transitions = NULL;
@@ -85,7 +102,8 @@ ret_t destroy_states(turing_machine **tm)
   return OK;
 }
 
-ret_t destroy_symbols(turing_machine **tm)
+ret_t 
+destroy_symbols(turing_machine **tm)
 {
   free((*tm)->symbols);
   (*tm)->symbols = NULL;
@@ -93,7 +111,8 @@ ret_t destroy_symbols(turing_machine **tm)
   return OK;
 }
 
-ret_t destroy_final_states(turing_machine **tm)
+ret_t 
+destroy_final_states(turing_machine **tm)
 {
   free((*tm)->final_states);
   (*tm)->final_states = NULL;
@@ -101,7 +120,8 @@ ret_t destroy_final_states(turing_machine **tm)
   return OK;
 }
 
-ret_t destroy_tape(turing_machine **tm) /* TODO */
+ret_t 
+destroy_tape(turing_machine **tm) 
 {
   free((*tm)->tape->elements);
   (*tm)->tape->elements = NULL;
@@ -112,7 +132,8 @@ ret_t destroy_tape(turing_machine **tm) /* TODO */
 	return OK;
 }
 
-ret_t add_symbol(turing_machine *tm, const unsigned long sym_index, const char symbol)
+ret_t 
+add_symbol(turing_machine *tm, const unsigned long sym_index, const char symbol)
 {
   if(sym_index+1 > tm->symbol_num)
   {
@@ -132,7 +153,8 @@ ret_t add_symbol(turing_machine *tm, const unsigned long sym_index, const char s
   return OK;
 }
 
-ret_t add_final_state(turing_machine *tm, const unsigned long state)
+ret_t 
+add_final_state(turing_machine *tm, const unsigned long state)
 {
   unsigned long *tmp_state_ptr = NULL;
   if(( tmp_state_ptr = malloc( sizeof(unsigned long)*(1+tm->final_state_count) )) == NULL)
@@ -159,7 +181,8 @@ ret_t add_final_state(turing_machine *tm, const unsigned long state)
   return OK;
 }
 
-ret_t add_to_tm(turing_machine *tm, const unsigned long from, const unsigned long trigger, const unsigned long to, const unsigned long to_write, const unsigned long mv_c)
+ret_t 
+add_to_tm(turing_machine *tm, const unsigned long from, const unsigned long trigger, const unsigned long to, const unsigned long to_write, const unsigned long mv_c)
 {
   if(manage_state_memory(tm, from, to) < 0 ) /* There might be more states than memory allocated for them */
   {
@@ -181,7 +204,8 @@ ret_t add_to_tm(turing_machine *tm, const unsigned long from, const unsigned lon
 	return OK;
 }
 
-ret_t run_step(const turing_machine *tm, unsigned long *pos, unsigned long *q)
+ret_t 
+run_step(const turing_machine *tm, unsigned long *pos, unsigned long *q)
 {
   int found = 0; /* Marks if the state is not found to stop the TM */
   unsigned long i;
@@ -222,7 +246,8 @@ ret_t run_step(const turing_machine *tm, unsigned long *pos, unsigned long *q)
   return found ? TRANSITION_FOUND : TRANSITION_NOT_FOUND;
 }
 
-ret_t run_all(const turing_machine *tm, unsigned long *pos, unsigned long *q)
+ret_t 
+run_all(const turing_machine *tm, unsigned long *pos, unsigned long *q)
 {
   ret_t ret_code;
 	while((ret_code = run_step(tm, pos, q)) != TRANSITION_NOT_FOUND && ret_code != END_STATE);
@@ -230,7 +255,8 @@ ret_t run_all(const turing_machine *tm, unsigned long *pos, unsigned long *q)
 	return ret_code;
 }
 
-ret_t read_tape(turing_machine *tm)
+ret_t 
+read_tape(turing_machine *tm)
 {
   tape *tape = tm->tape;
 
@@ -254,7 +280,8 @@ ret_t read_tape(turing_machine *tm)
 	return OK;
 }
 
-void print_tape(turing_machine *tm, unsigned long pos)
+void 
+print_tape(turing_machine *tm, unsigned long pos)
 {
   printf("\n[");
   unsigned long c;
@@ -279,7 +306,8 @@ void print_tape(turing_machine *tm, unsigned long pos)
 }
 
 /* PRIVATE */
-ret_t parse_tm_file(const char *filename, turing_machine *tm)
+ret_t 
+parse_tm_file(const char *filename, turing_machine *tm)
 {
 		FILE *f;
 		if((f = fopen(filename, "r")) == NULL)
@@ -296,7 +324,8 @@ ret_t parse_tm_file(const char *filename, turing_machine *tm)
 		return OK;
 }
 
-ret_t alloc_and_init(turing_machine **tm)
+ret_t 
+alloc_and_init(turing_machine **tm)
 {
   if((*tm = malloc(sizeof(turing_machine))) == NULL) /* TM alloc */
   {
@@ -338,7 +367,8 @@ ret_t alloc_and_init(turing_machine **tm)
   return OK;
 }
 
-ret_t manage_state_memory(turing_machine *tm, const unsigned long from, const unsigned long to)
+ret_t 
+manage_state_memory(turing_machine *tm, const unsigned long from, const unsigned long to)
 {
   unsigned long max_arg = from > to ? from : to;
 
@@ -382,7 +412,8 @@ ret_t manage_state_memory(turing_machine *tm, const unsigned long from, const un
   return OK;
 }
 
-ret_t manage_transitions_memory(turing_machine *tm, const unsigned long from)
+ret_t 
+manage_transitions_memory(turing_machine *tm, const unsigned long from)
 {
   if(tm->states[from].transitions == NULL) /* Allocate memory for the first transition */
   {
